@@ -15,17 +15,12 @@ package org.openhab.binding.danfossally.internal;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
 /**
- * The {@link DanfossAllyConfiguration} class contains fields mapping thing configuration parameters.
+ * 
  *
- * @author Stas Dovgodko - Initial contribution
+ * @author Stas Dovgodko <stas@dovgodko.dev> - Initial contribution
  */
 @NonNullByDefault
-public class DanfossAllyConfiguration {
+public class DanfossAllyDeviceConfiguration {
 
-    /**
-     * Sample configuration parameters. Replace with your own.
-     */
-    public String hostname = "";
-    public String password = "";
-    public int refreshInterval = 600;
+    public String deviceId = "";
 }

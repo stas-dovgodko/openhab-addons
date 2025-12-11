@@ -2,47 +2,303 @@
 <thing:thing-descriptions bindingId="danfossally"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
-	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0
+https://openhab.org/schemas/thing-description-1.0.0.xsd">
+	<!-- -->
+	<!-- binding Binding -->
+	<!-- -->
+	<bridge-type id="account">
+		<label>@text/thing-type.danfossally.binding.label</label>
+		<description>@text/thing-type.danfossally.binding.description</description>
+		<category>NetworkAppliance</category>
+		<config-description>
+			<parameter name="clientId" type="text" required="true">
+				<label>@text/thing-type.danfossally.binding.clientId.label</label>
+				<description>@text/thing-type.danfossally.binding.clientId.description</description>
+			</parameter>
 
-	<!-- Sample Thing Type -->
-	<thing-type id="sample">
-		<!-- Comment this in for Things which need a Bridge to function.
-			<supported-bridge-type-refs>
-			<bridge-type-ref id="DanfossAllyBridge" />
-			</supported-bridge-type-refs>
-		-->
+			<parameter name="clientSecret" type="text" required="true">
+				<context>password</context>
+				<label>@text/thing-type.danfossally.binding.clientSecret.label</label>
+				<description>@text/thing-type.danfossally.binding.clientSecret.description</description>
+			</parameter>
 
-		<label>DanfossAlly Binding Thing</label>
-		<description>Sample thing for DanfossAlly Binding</description>
+			<parameter name="pollingInterval" type="integer" required="false" min="10">
+				<label>@text/thing-type.danfossally.binding.pollingInterval.label</label>
+				<description>@text/thing-type.danfossally.binding.pollingInterval.description</description>
+				<default>60</default>
+			</parameter>
+		</config-description>
+	</bridge-type>
+
+	<thing-type id="thermostat">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="account"/>
+		</supported-bridge-type-refs>
+		<label>@text/thing-type.danfossally.thermostat.label</label>
+		<description>@text/thing-type.danfossally.thermostat.description</description>
+		<category>Radiator</category>
+		<semantic-equipment-tag>WaterHeater</semantic-equipment-tag>
+
+
 
 		<channels>
-			<channel id="channel1" typeId="sample-channel"/>
+			<channel id="online" typeId="danfossally_online">
+				<label>Online</label>
+			</channel>
+
+			<channel id="sub" typeId="danfossally_sub">
+				<label>Subscription Status</label>
+			</channel>
+
+			<channel id="active" typeId="danfossally_active">
+				<label>Active</label>
+			</channel>
+
+			<channel id="activeTime" typeId="danfossally_datetime">
+				<label>Active Time</label>
+			</channel>
+
+			<channel id="createTime" typeId="danfossally_datetime">
+				<label>Create Time</label>
+			</channel>
+
+			<channel id="updateTime" typeId="danfossally_datetime">
+				<label>Update Time</label>
+			</channel>
+
+			<channel id="tempCurrent" typeId="danfossally_temperature">
+				<label>Current Temperature</label>
+			</channel>
+
+			<channel id="tempSet" typeId="danfossally_temperature">
+				<label>Reported Set Temperature</label>
+			</channel>
+
+			<channel id="setpoint" typeId="danfossally_temperature">
+				<label>Effective Setpoint</label>
+			</channel>
+
+			<channel id="delta" typeId="danfossally_temperature">
+				<label>Temperature Delta</label>
+			</channel>
+
+			<channel id="mode" typeId="danfossally_mode">
+				<label>Mode</label>
+			</channel>
 		</channels>
 
 		<config-description>
-			<parameter name="hostname" type="text" required="true">
-				<context>network-address</context>
-				<label>Hostname</label>
-				<description>Hostname or IP address of the device</description>
+			<parameter name="deviceId" type="text" required="true">
+				<label>@text/thing-type.danfossally.thermostat.deviceId.label</label>
+				<description>@text/thing-type.danfossally.thermostat.deviceId.description</description>
 			</parameter>
-			<parameter name="password" type="text" required="true">
-				<context>password</context>
-				<label>Password</label>
-				<description>Password to access the device</description>
-			</parameter>
-			<parameter name="refreshInterval" type="integer" unit="s" min="1">
-				<label>Refresh Interval</label>
-				<description>Interval the device is polled in sec.</description>
-				<default>600</default>
-				<advanced>true</advanced>
-			</parameter>
+
 		</config-description>
 	</thing-type>
 
-	<!-- Sample Channel Type -->
-	<channel-type id="sample-channel">
+	<channel-type id="danfossally_active">
+		<item-type>Contact</item-type>
+		<label>Active</label>
+		<description>Device output is active</description>
+		<category>Contact</category>
+	</channel-type>
+
+	<channel-type id="danfossally_online">
+		<item-type>Contact</item-type>
+		<label>Online</label>
+		<description>Device online state</description>
+		<category>Contact</category>
+	</channel-type>
+
+	<channel-type id="danfossally_sub">
+		<item-type>Contact</item-type>
+		<label>Subscription Status</label>
+		<description>Subscription / API connectivity state</description>
+		<category>Contact</category>
+	</channel-type>
+
+	<channel-type id="danfossally_datetime">
+		<item-type>DateTime</item-type>
+		<label>Timestamp</label>
+		<description>Device time information</description>
+		<category>Time</category>
+	</channel-type>
+
+	<channel-type id="danfossally_temperature">
 		<item-type>Number:Temperature</item-type>
-		<label>Example Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-		<description>Sample channel for DanfossAlly Binding</description>
+		<label>Temperature</label>
+		<description>Temperature value in degrees Celsius</description>
+		<category>Temperature</category>
+	</channel-type>
+
+	<channel-type id="danfossally_mode">
+		<item-type>String</item-type>
+		<label>Mode</label>
+		<description>Operating mode (manual, at_home, holiday, ...)</description>
+		<state>
+			<options>
+				<option value="manual">Manual</option>
+				<option value="at_home">At Home</option>
+				<option value="leaving_home">Leaving Home</option>
+				<option value="holiday">Holiday</option>
+				<option value="pause">Pause</option>
+			</options>
+		</state>
 	</channel-type>
 </thing:thing-descriptions>
+
+<!--
+	<thing:thing-descriptions bindingId="danfossally"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:thing="http://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="http://openhab.org/schemas/thing-description/v1.0.0 http://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+
+	===========================================================
+	BRIDGE: DANFOSS ALLY ACCOUNT
+	===========================================================
+	<thing-type id="account">
+	<label>Danfoss Ally Account</label>
+	<description>OAuth2 connection to the Danfoss Ally cloud API</description>
+
+	<config-description>
+	<parameter name="clientId" type="text" required="true">
+	<label>Client ID</label>
+	<description>OAuth2 client identifier</description>
+	</parameter>
+
+	<parameter name="clientSecret" type="text" required="true">
+	<context>password</context>
+	<label>Client Secret</label>
+	<description>OAuth2 client secret</description>
+	</parameter>
+
+	<parameter name="pollingInterval" type="integer" required="false" min="10">
+	<label>Polling Interval</label>
+	<description>How often device data is refreshed (seconds)</description>
+	<default>60</default>
+	</parameter>
+	</config-description>
+	</thing-type>
+
+	===========================================================
+	THING: DANFOSS ALLY THERMOSTAT
+	===========================================================
+	<thing-type id="thermostat">
+	<label>Danfoss Ally Thermostat</label>
+	<description>Danfoss Ally radiator thermostat</description>
+	<category>Radiator</category>
+
+	<supported-bridge-type-refs>
+	<bridge-type-ref id="account"/>
+	</supported-bridge-type-refs>
+
+	<channels>
+	<channel id="online" typeId="danfossally_online">
+	<label>Online</label>
+	</channel>
+
+	<channel id="sub" typeId="danfossally_sub">
+	<label>Subscription Status</label>
+	</channel>
+
+	<channel id="activeTime" typeId="danfossally_datetime">
+	<label>Active Time</label>
+	</channel>
+
+	<channel id="createTime" typeId="danfossally_datetime">
+	<label>Create Time</label>
+	</channel>
+
+	<channel id="updateTime" typeId="danfossally_datetime">
+	<label>Update Time</label>
+	</channel>
+
+	<channel id="tempCurrent" typeId="danfossally_temperature">
+	<label>Current Temperature</label>
+	</channel>
+
+	<channel id="tempSet" typeId="danfossally_temperature">
+	<label>Reported Set Temperature</label>
+	</channel>
+
+	<channel id="setpoint" typeId="danfossally_temperature">
+	<label>Effective Setpoint</label>
+	</channel>
+
+	<channel id="delta" typeId="danfossally_temperature">
+	<label>Temperature Delta</label>
+	</channel>
+
+	<channel id="mode" typeId="danfossally_mode">
+	<label>Mode</label>
+	</channel>
+	</channels>
+
+	<config-description>
+	<parameter name="deviceId" type="text" required="true">
+	<label>Device ID</label>
+	<description>Danfoss Ally device identifier</description>
+	</parameter>
+
+	<parameter name="enabled" type="boolean" required="false">
+	<label>Enable Device</label>
+	<description>Disable to ignore this device</description>
+	<default>true</default>
+	</parameter>
+	</config-description>
+	</thing-type>
+
+	===========================================================
+	CHANNEL TYPE
+	===========================================================
+
+	< !- - Contact: online/sub - ->
+	<channel-type id="danfossally_online">
+	<item-type>Contact</item-type>
+	<label>Online</label>
+	<description>Device online state</description>
+	<category>Contact</category>
+	</channel-type>
+
+	<channel-type id="danfossally_sub">
+	<item-type>Contact</item-type>
+	<label>Subscription Status</label>
+	<description>Subscription / API connectivity state</description>
+	<category>Contact</category>
+	</channel-type>
+
+	< !- - DateTime: generic timestamp - ->
+	<channel-type id="danfossally_datetime">
+	<item-type>DateTime</item-type>
+	<label>Timestamp</label>
+	<description>Device time information</description>
+	<category>Time</category>
+	</channel-type>
+
+	< ! - - Temperature: Number:Temperature - ->
+	<channel-type id="danfossally_temperature">
+	<item-type>Number:Temperature</item-type>
+	<label>Temperature</label>
+	<description>Temperature value in degrees Celsius</description>
+	<category>Temperature</category>
+	</channel-type>
+
+	< ! - - Mode: String with options - ->
+	<channel-type id="danfossally_mode">
+	<item-type>String</item-type>
+	<label>Mode</label>
+	<description>Operating mode (manual, at_home, holiday, ...)</description>
+	<state>
+	<options>
+	<option value="manual">Manual</option>
+	<option value="at_home">At Home</option>
+	<option value="leaving_home">Leaving Home</option>
+	<option value="holiday">Holiday</option>
+	<option value="pause">Pause</option>
+	</options>
+	</state>
+	</channel-type>
+
+	</thing:thing-descriptions>
+-->

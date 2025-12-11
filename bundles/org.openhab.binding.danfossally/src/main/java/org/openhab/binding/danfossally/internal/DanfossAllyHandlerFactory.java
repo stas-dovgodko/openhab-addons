@@ -18,36 +18,37 @@ import java.util.Set;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.binding.BaseThingHandlerFactory;
 import org.openhab.core.thing.binding.ThingHandler;
-import org.openhab.core.thing.binding.ThingHandlerFactory;
 import org.osgi.service.component.annotations.Component;
 
 /**
- * The {@link DanfossAllyHandlerFactory} is responsible for creating things and thing
- * handlers.
+ * 
  *
- * @author Stas Dovgodko - Initial contribution
+ * @author Stas Dovgodko <stas@dovgodko.dev> - Initial contribution
  */
 @NonNullByDefault
-@Component(configurationPid = "binding.danfossally", service = ThingHandlerFactory.class)
+@Component(service = org.openhab.core.thing.binding.ThingHandlerFactory.class, configurationPid = "binding."
+        + BINDING_ID)
 public class DanfossAllyHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_SAMPLE);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(BRIDGE_THING_TYPE, THING_TYPE_THERMOSTAT);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
+        return SUPPORTED_THING_TYPES.contains(thingTypeUID);
     }
 
     @Override
     protected @Nullable ThingHandler createHandler(Thing thing) {
-        ThingTypeUID thingTypeUID = thing.getThingTypeUID();
-
-        if (THING_TYPE_SAMPLE.equals(thingTypeUID)) {
-            return new DanfossAllyHandler(thing);
+        ThingTypeUID type = thing.getThingTypeUID();
+        if (BRIDGE_THING_TYPE.equals(type)) {
+            return new DanfossAllyBridgeHandler((Bridge) thing);
+        } else if (THING_TYPE_THERMOSTAT.equals(type)) {
+            return new DanfossAllyDeviceHandler(thing);
         }
 
         return null;

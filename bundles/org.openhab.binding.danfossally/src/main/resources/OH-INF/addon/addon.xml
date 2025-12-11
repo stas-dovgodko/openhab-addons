@@ -4,7 +4,10 @@
 	xsi:schemaLocation="https://openhab.org/schemas/addon/v1.0.0 https://openhab.org/schemas/addon-1.0.0.xsd">
 
 	<type>binding</type>
-	<name>DanfossAlly Binding</name>
-	<description>This is the binding for DanfossAlly.</description>
+	<name>Danfoss Ally Binding</name>
+	<description>This binding integrates Danfoss Ally™ smart thermostats into openHAB. It allows you to monitor and
+		control
+		your heating system through the Danfoss cloud API.
+	</description>
 
 </addon:addon>

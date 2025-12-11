@@ -12,23 +12,49 @@
  */
 package org.openhab.binding.danfossally.internal;
 
+import java.util.Set;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingTypeUID;
 
 /**
- * The {@link DanfossAllyBindingConstants} class defines common constants, which are
- * used across the whole binding.
+ * 
  *
- * @author Stas Dovgodko - Initial contribution
+ * @author Stas Dovgodko <stas@dovgodko.dev> - Initial contribution
  */
 @NonNullByDefault
 public class DanfossAllyBindingConstants {
 
-    private static final String BINDING_ID = "danfossally";
+    public static final String BINDING_ID = "danfossally";
 
-    // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "sample");
+    // Bridge
+    public static final ThingTypeUID BRIDGE_THING_TYPE = new ThingTypeUID(BINDING_ID, "account");
 
-    // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+    // Один тип thing для термостата
+    public static final ThingTypeUID THING_TYPE_THERMOSTAT = new ThingTypeUID(BINDING_ID, "thermostat");
+
+    // Канали (мінімальний набір, можна розширювати)
+    public static final String CHANNEL_ONLINE = "online";
+    public static final String CHANNEL_SUB = "sub";
+    public static final String CHANNEL_ACTIVE_TIME = "activeTime";
+    public static final String CHANNEL_CREATE_TIME = "createTime";
+    public static final String CHANNEL_UPDATE_TIME = "updateTime";
+
+    public static final String CHANNEL_TEMP_CURRENT = "tempCurrent";
+    public static final String CHANNEL_TEMP_SET = "tempSet";
+    public static final String CHANNEL_MODE = "mode";
+    public static final String CHANNEL_SETPOINT = "setpoint";
+    public static final String CHANNEL_DELTA = "delta";
+    public static final String CHANNEL_ACTIVE = "active";
+
+    public static ChannelUID channelUID(String thingUID, String channelId) {
+        return new ChannelUID(thingUID + ":" + channelId);
+    }
+
+    // Константа для конфіг-параметра у thing-types.xml
+    public static final String CONFIG_DEVICE_ID = "deviceId";
+
+    // Набір типів, які може знаходити discovery
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(THING_TYPE_THERMOSTAT);
 }
