@@ -92,26 +92,36 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
                     JSONObject dev = devices.getJSONObject(i);
                     String id = dev.getString("id");
                     String name = dev.optString("name", "Danfoss Ally " + id);
+                    String deviceType = dev.getString("device_type");
 
-                    ThingUID thingUID = new ThingUID(THING_TYPE_THERMOSTAT, getThing().getUID(), id);
+                    if (THERMOSTAT_DEVICE_TYPES.contains(deviceType)) {
 
-                    getThing().getThings().forEach(child -> {
-                        if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
-                            if (handler.getDeviceId().equals(id)) {
-                                handler.updateFromDevice(dev);
+                        ThingUID thingUID = new ThingUID(THING_TYPE_THERMOSTAT, getThing().getUID(), id);
 
-                                logger.debug("Found device [{}, {}]", id, dev.toString(2));
+                        getThing().getThings().forEach(child -> {
+                            if (child
+                                    .getHandler() instanceof org.openhab.binding.danfossally.internal.thermostat.DanfossAllyDeviceHandler handler) {
+                                if (handler.getDeviceId().equals(id)) {
+                                    handler.updateFromDevice(dev);
 
-                                foundIds.add(id);
+                                    logger.debug("Found thermostat device [{}, {}]", id, dev.toString(2));
+
+                                    foundIds.add(id);
+                                }
+                            } else {
+                                // ?
+                                logger.error("Wrong device handler [{}, {}]", id,
+                                        child.getHandler().getClass().getCanonicalName());
                             }
-                        }
-                    });
+                        });
 
-                    logger.debug("Ally [{}, {}]", thingUID.getAsString(), name);
+                        logger.debug("Ally [{}, {}]", thingUID.getAsString(), name);
+                    }
                 }
 
                 for (Thing child : getThing().getThings()) {
-                    if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
+                    if (child
+                            .getHandler() instanceof org.openhab.binding.danfossally.internal.thermostat.DanfossAllyDeviceHandler handler) {
                         String childId = handler.getDeviceId();
                         if (!foundIds.contains(childId)) {
                             logger.warn("Danfoss Ally: Device {} not returned by API → marking OFFLINE", childId);
@@ -248,10 +258,10 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             headers.put("Accept", "application/json");
 
             String response = HttpUtil.executeUrl("POST", url, headers, new ByteArrayInputStream(bytes),
-                    "application/json", 2000);
+                    "application/json", 5000);
 
             JSONObject json = new JSONObject(new JSONTokener(response));
-            // якщо API повертає result=true / false
+
             return json.optBoolean("result", true);
         } catch (IOException e) {
             logger.warn("Error sending commands to device {}: {}", deviceId, e.getMessage());

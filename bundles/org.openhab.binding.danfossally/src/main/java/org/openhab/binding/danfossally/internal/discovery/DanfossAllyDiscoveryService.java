@@ -59,10 +59,6 @@ public class DanfossAllyDiscoveryService extends AbstractThingHandlerDiscoverySe
         super(DanfossAllyBridgeHandler.class, SUPPORTED_TYPES, SCAN_TIMEOUT_SECONDS, true);
     }
 
-    // ---------------------------------------------------------
-    // Життєвий цикл / привʼязка до bridge handler
-    // ---------------------------------------------------------
-
     @Override
     public void setThingHandler(org.openhab.core.thing.binding.ThingHandler handler) {
         super.setThingHandler(handler);
@@ -106,22 +102,26 @@ public class DanfossAllyDiscoveryService extends AbstractThingHandlerDiscoverySe
 
             String id = dev.getString("id");
             String name = dev.optString("name", "Danfoss Ally " + id);
+            String deviceType = dev.getString("device_type");
 
-            ThingUID thingUID = new ThingUID(THING_TYPE_THERMOSTAT, bridgeUID, id);
+            if (THERMOSTAT_DEVICE_TYPES.contains(deviceType)) {
+                ThingUID thingUID = new ThingUID(THING_TYPE_THERMOSTAT, bridgeUID, id);
 
-            Map<String, Object> props = new HashMap<>();
-            // імʼя має збігатися з параметром в thing-types.xml
-            props.put(CONFIG_DEVICE_ID, id);
+                Map<String, Object> props = new HashMap<>();
+                props.put(CONFIG_DEVICE_ID, id);
 
-            DiscoveryResult result = DiscoveryResultBuilder.create(thingUID) //
-                    .withThingType(THING_TYPE_THERMOSTAT) //
-                    .withBridge(bridgeUID) //
-                    .withLabel(name) //
-                    .withProperties(props) //
-                    .build();
+                DiscoveryResult result = DiscoveryResultBuilder.create(thingUID) //
+                        .withThingType(THING_TYPE_THERMOSTAT) //
+                        .withBridge(bridgeUID) //
+                        .withLabel(name) //
+                        .withProperties(props) //
+                        .build();
 
-            logger.debug("Discovered Danfoss Ally thermostat: id={}, name={}, uid={}", id, name, thingUID);
-            thingDiscovered(result);
+                logger.debug("Discovered Danfoss Ally thermostat: id={}, name={}, uid={}", id, name, thingUID);
+                thingDiscovered(result);
+            } else {
+                logger.debug("Discovered unsupported Ally device: id={}, name={}, type={}", id, name, deviceType);
+            }
         }
     }
 }

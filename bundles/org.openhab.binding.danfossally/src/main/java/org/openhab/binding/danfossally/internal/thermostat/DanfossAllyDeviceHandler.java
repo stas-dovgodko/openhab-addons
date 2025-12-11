@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.danfossally.internal;
+package org.openhab.binding.danfossally.internal.thermostat;
 
 import static org.openhab.binding.danfossally.internal.DanfossAllyBindingConstants.*;
 
@@ -22,6 +22,7 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.openhab.binding.danfossally.internal.DanfossAllyBridgeHandler;
 import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.QuantityType;
@@ -102,14 +103,14 @@ public class DanfossAllyDeviceHandler extends BaseThingHandler {
             case CHANNEL_SETPOINT:
                 if (command instanceof QuantityType<?> q) {
                     double value = q.toBigDecimal().doubleValue();
-                    JSONObject cmd = new JSONObject().put("code", "temp_set").put("value", Math.round(value));
-                    commands.put(cmd);
+                    commands.put(
+                            new JSONObject().put("code", "manual_mode_fast").put("value", Math.round(value * 10.0)));
+                    commands.put(new JSONObject().put("code", "mode").put("value", "manual"));
                 }
                 break;
             case CHANNEL_MODE:
                 if (command instanceof StringType s) {
-                    JSONObject cmd = new JSONObject().put("code", "mode").put("value", s.toString());
-                    commands.put(cmd);
+                    commands.put(new JSONObject().put("code", "mode").put("value", s.toString()));
                 }
                 break;
             default:

@@ -48,7 +48,7 @@ public class DanfossAllyHandlerFactory extends BaseThingHandlerFactory {
         if (BRIDGE_THING_TYPE.equals(type)) {
             return new DanfossAllyBridgeHandler((Bridge) thing);
         } else if (THING_TYPE_THERMOSTAT.equals(type)) {
-            return new DanfossAllyDeviceHandler(thing);
+            return new org.openhab.binding.danfossally.internal.thermostat.DanfossAllyDeviceHandler(thing);
         }
 
         return null;

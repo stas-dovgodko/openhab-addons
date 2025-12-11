@@ -57,4 +57,7 @@ public class DanfossAllyBindingConstants {
 
     // Набір типів, які може знаходити discovery
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(THING_TYPE_THERMOSTAT);
+
+    // Thermostat device types from API
+    public static final Set<String> THERMOSTAT_DEVICE_TYPES = Set.of("Danfoss Icon2 RT");
 }
