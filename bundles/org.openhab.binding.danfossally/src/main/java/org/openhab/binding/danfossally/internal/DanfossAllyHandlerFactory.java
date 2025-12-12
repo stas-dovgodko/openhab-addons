@@ -35,7 +35,8 @@ import org.osgi.service.component.annotations.Component;
         + BINDING_ID)
 public class DanfossAllyHandlerFactory extends BaseThingHandlerFactory {
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(BRIDGE_THING_TYPE, THING_TYPE_THERMOSTAT);
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Set.of(BRIDGE_THING_TYPE, THING_TYPE_THERMOSTAT,
+            THING_TYPE_GATEWAY, THING_TYPE_CONTROLLER);
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -49,6 +50,10 @@ public class DanfossAllyHandlerFactory extends BaseThingHandlerFactory {
             return new DanfossAllyBridgeHandler((Bridge) thing);
         } else if (THING_TYPE_THERMOSTAT.equals(type)) {
             return new org.openhab.binding.danfossally.internal.thermostat.DanfossAllyDeviceHandler(thing);
+        } else if (THING_TYPE_CONTROLLER.equals(type)) {
+            return new org.openhab.binding.danfossally.internal.controller.DanfossAllyDeviceHandler(thing);
+        } else if (THING_TYPE_GATEWAY.equals(type)) {
+            return new org.openhab.binding.danfossally.internal.gateway.DanfossAllyDeviceHandler(thing);
         }
 
         return null;

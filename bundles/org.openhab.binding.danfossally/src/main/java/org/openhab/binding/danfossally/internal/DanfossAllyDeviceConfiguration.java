@@ -10,7 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-package org.openhab.binding.danfossally.internal.thermostat;
+package org.openhab.binding.danfossally.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 

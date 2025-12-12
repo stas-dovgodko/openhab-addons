@@ -278,9 +278,11 @@ If you need to manually configure devices or find device IDs:
 1. **Automatic Discovery (Easiest):** After configuring the bridge, go to Settings → Things → Inbox. Discovered devices will appear with their device IDs visible in the thing properties.
 
 2. **Check Logs:** Enable INFO or DEBUG logging and check `openhab.log`:
+
    ```
    log:set INFO org.openhab.binding.danfossally.internal
    ```
+
    Device IDs will be logged during discovery and polling cycles.
 
 ### Commands Not Working
@@ -297,11 +299,13 @@ If you have Danfoss Ally devices that are not automatically discovered or suppor
 1. Enable INFO logging for the binding:
    
    **Via Karaf console:**
+
    ```
    log:set INFO org.openhab.binding.danfossally.internal
    ```
    
    **Via log4j2.xml:**
+
    ```xml
    <Logger level="INFO" name="org.openhab.binding.danfossally.internal"/>
    ```

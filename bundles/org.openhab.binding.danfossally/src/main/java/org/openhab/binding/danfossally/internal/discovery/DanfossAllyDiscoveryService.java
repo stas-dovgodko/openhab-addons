@@ -24,7 +24,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openhab.binding.danfossally.internal.DanfossAllyBridgeHandler;
 import org.openhab.core.config.discovery.AbstractThingHandlerDiscoveryService;
-import org.openhab.core.config.discovery.DiscoveryResult;
 import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingTypeUID;
@@ -48,8 +47,9 @@ public class DanfossAllyDiscoveryService extends AbstractThingHandlerDiscoverySe
 
     private static final Logger logger = LoggerFactory.getLogger(DanfossAllyDiscoveryService.class);
 
-    private static final int SCAN_TIMEOUT_SECONDS = 60;
-    private static final Set<ThingTypeUID> SUPPORTED_TYPES = Set.of(THING_TYPE_THERMOSTAT);
+    private static final int SCAN_TIMEOUT_SECONDS = 10;
+    private static final Set<ThingTypeUID> SUPPORTED_TYPES = Set.of(THING_TYPE_THERMOSTAT, THING_TYPE_CONTROLLER,
+            THING_TYPE_GATEWAY);
 
     // буде виставлений фреймворком через setThingHandler()
     private @Nullable DanfossAllyBridgeHandler bridgeHandler;
@@ -73,6 +73,8 @@ public class DanfossAllyDiscoveryService extends AbstractThingHandlerDiscoverySe
     protected void startScan() {
         logger.debug("Starting Danfoss Ally device scan");
         discoverDevicesForBridge();
+
+        stopScan();
     }
 
     private void discoverDevicesForBridge() {
@@ -104,24 +106,29 @@ public class DanfossAllyDiscoveryService extends AbstractThingHandlerDiscoverySe
             String name = dev.optString("name", "Danfoss Ally " + id);
             String deviceType = dev.getString("device_type");
 
+            ThingTypeUID type;
+
             if (THERMOSTAT_DEVICE_TYPES.contains(deviceType)) {
-                ThingUID thingUID = new ThingUID(THING_TYPE_THERMOSTAT, bridgeUID, id);
-
-                Map<String, Object> props = new HashMap<>();
-                props.put(CONFIG_DEVICE_ID, id);
-
-                DiscoveryResult result = DiscoveryResultBuilder.create(thingUID) //
-                        .withThingType(THING_TYPE_THERMOSTAT) //
-                        .withBridge(bridgeUID) //
-                        .withLabel(name) //
-                        .withProperties(props) //
-                        .build();
-
-                logger.debug("Discovered Danfoss Ally thermostat: id={}, name={}, uid={}", id, name, thingUID);
-                thingDiscovered(result);
+                type = THING_TYPE_THERMOSTAT;
+            } else if (CONTROLLER_DEVICE_TYPES.contains(deviceType)) {
+                type = THING_TYPE_CONTROLLER;
+            } else if (GATEWAY_DEVICE_TYPES.contains(deviceType)) {
+                type = THING_TYPE_GATEWAY;
             } else {
                 logger.debug("Discovered unsupported Ally device: id={}, name={}, type={}", id, name, deviceType);
+                continue;
             }
+
+            Map<String, Object> props = new HashMap<>();
+            props.put(CONFIG_DEVICE_ID, id);
+
+            logger.debug("Discovered Danfoss Ally thermostat: id={}, name={}, type={}", id, name, type.getAsString());
+            thingDiscovered(DiscoveryResultBuilder.create(new ThingUID(type, bridgeUID, id)) //
+                    .withThingType(type) //
+                    .withBridge(bridgeUID) //
+                    .withLabel(name) //
+                    .withProperties(props) //
+                    .build());
         }
     }
 }

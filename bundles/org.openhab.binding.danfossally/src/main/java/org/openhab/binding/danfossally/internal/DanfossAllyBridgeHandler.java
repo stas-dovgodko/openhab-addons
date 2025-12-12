@@ -38,7 +38,6 @@ import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.ThingStatusInfo;
-import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.thing.binding.ThingHandlerService;
 import org.openhab.core.types.Command;
@@ -66,6 +65,17 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
         super(bridge);
     }
 
+    public int getPollingInterval() {
+        DanfossAllyBridgeConfiguration cfg = config;
+        if (cfg == null) {
+            return 60;
+        }
+
+        int interval = cfg.pollingInterval > 0 ? cfg.pollingInterval : 60;
+
+        return interval;
+    }
+
     @Override
     public void initialize() {
         DanfossAllyBridgeConfiguration cfg = getConfigAs(DanfossAllyBridgeConfiguration.class);
@@ -77,7 +87,7 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
 
         this.config = cfg;
 
-        int interval = cfg.pollingInterval > 0 ? cfg.pollingInterval : 60;
+        int interval = getPollingInterval();
 
         pollingJob = scheduler.scheduleWithFixedDelay(() -> {
             try {
@@ -94,34 +104,31 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
                     String name = dev.optString("name", "Danfoss Ally " + id);
                     String deviceType = dev.getString("device_type");
 
-                    if (THERMOSTAT_DEVICE_TYPES.contains(deviceType)) {
-
-                        ThingUID thingUID = new ThingUID(THING_TYPE_THERMOSTAT, getThing().getUID(), id);
-
-                        getThing().getThings().forEach(child -> {
-                            if (child
-                                    .getHandler() instanceof org.openhab.binding.danfossally.internal.thermostat.DanfossAllyDeviceHandler handler) {
-                                if (handler.getDeviceId().equals(id)) {
-                                    handler.updateFromDevice(dev);
-
-                                    logger.debug("Found thermostat device [{}, {}]", id, dev.toString(2));
-
-                                    foundIds.add(id);
-                                }
-                            } else {
-                                // ?
-                                logger.error("Wrong device handler [{}, {}]", id,
-                                        child.getHandler().getClass().getCanonicalName());
-                            }
-                        });
-
-                        logger.debug("Ally [{}, {}]", thingUID.getAsString(), name);
+                    if (!THERMOSTAT_DEVICE_TYPES.contains(deviceType) && !CONTROLLER_DEVICE_TYPES.contains(deviceType)
+                            && !GATEWAY_DEVICE_TYPES.contains(deviceType)) {
+                        logger.debug("Ally unsupported device type - {} for {}/{}", deviceType, name, id);
+                        continue;
                     }
+
+                    getThing().getThings().forEach(child -> {
+                        if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
+                            if (handler.getDeviceId().equals(id)) {
+                                handler.updateFromDevice(dev);
+
+                                logger.debug("Found supported device [{}, {}]", id, dev.toString(2));
+
+                                foundIds.add(id);
+                            }
+                        } else {
+                            // ?
+                            logger.error("Wrong device handler [{}, {}]", id,
+                                    child.getHandler().getClass().getCanonicalName());
+                        }
+                    });
                 }
 
                 for (Thing child : getThing().getThings()) {
-                    if (child
-                            .getHandler() instanceof org.openhab.binding.danfossally.internal.thermostat.DanfossAllyDeviceHandler handler) {
+                    if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
                         String childId = handler.getDeviceId();
                         if (!foundIds.contains(childId)) {
                             logger.warn("Danfoss Ally: Device {} not returned by API → marking OFFLINE", childId);
@@ -148,7 +155,7 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
         accessToken = null;
     }
 
-    public synchronized @Nullable String getAccessToken() {
+    protected synchronized @Nullable String getAccessToken() {
         DanfossAllyBridgeConfiguration cfg = config;
         if (cfg == null) {
             return null;
@@ -170,6 +177,8 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             Properties headers = new Properties();
             headers.put("Authorization", authHeader);
             headers.put("Accept", "application/json");
+
+            logger.debug("Get neq access token for {} client", cfg.clientId);
 
             String response = HttpUtil.executeUrl("POST", "https://api.danfoss.com/oauth2/token", headers,
                     new ByteArrayInputStream(bytes), "application/x-www-form-urlencoded;charset=UTF-8", 5000);
@@ -202,6 +211,8 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             headers.put("Authorization", "Bearer " + token);
             headers.put("Accept", "application/json");
 
+            logger.debug("HTTP request to {} with {} token", url, token);
+
             String response = HttpUtil.executeUrl("GET", url, headers, null, // content (InputStream) – не потрібно для
                                                                              // GET
                     null, // contentType
@@ -230,10 +241,37 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             headers.put("Authorization", "Bearer " + token);
             headers.put("Accept", "application/json");
 
+            logger.debug("HTTP request to {} with {} token", url, token);
+
             String response = HttpUtil.executeUrl("GET", url, headers, null, null, 5000);
 
             JSONObject json = new JSONObject(new JSONTokener(response));
             return json.getJSONObject("result");
+        } catch (IOException e) {
+            logger.warn("Error getting Danfoss Ally device {}: {}", deviceId, e.getMessage());
+            return null;
+        }
+    }
+
+    public @Nullable JSONArray getStatus(String deviceId) {
+        String token = getAccessToken();
+        if (token == null) {
+            return null;
+        }
+
+        try {
+            String url = "https://api.danfoss.com/ally/devices/" + deviceId + "/status";
+
+            Properties headers = new Properties();
+            headers.put("Authorization", "Bearer " + token);
+            headers.put("Accept", "application/json");
+
+            logger.debug("HTTP request to {} with {} token", url, token);
+
+            String response = HttpUtil.executeUrl("GET", url, headers, null, null, 5000);
+
+            JSONObject json = new JSONObject(new JSONTokener(response));
+            return json.getJSONArray("result");
         } catch (IOException e) {
             logger.warn("Error getting Danfoss Ally device {}: {}", deviceId, e.getMessage());
             return null;
@@ -256,6 +294,8 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             Properties headers = new Properties();
             headers.put("Authorization", "Bearer " + token);
             headers.put("Accept", "application/json");
+
+            logger.debug("HTTP POST to {} with {} token", url, token);
 
             String response = HttpUtil.executeUrl("POST", url, headers, new ByteArrayInputStream(bytes),
                     "application/json", 5000);
