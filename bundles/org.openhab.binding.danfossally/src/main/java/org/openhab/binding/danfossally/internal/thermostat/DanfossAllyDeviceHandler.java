@@ -97,8 +97,8 @@ public class DanfossAllyDeviceHandler extends org.openhab.binding.danfossally.in
                 case "mode":
                     mode = String.valueOf(value);
                     break;
-                case "switch_state":
-                    active = s.optBoolean("value");
+                case "output_status":
+                    active = s.optString("value").equals("active");
                     break;
                 case "fault":
                     fault = s.optBoolean("value");
