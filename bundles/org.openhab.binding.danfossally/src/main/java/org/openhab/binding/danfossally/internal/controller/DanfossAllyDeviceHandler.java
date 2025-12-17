@@ -12,14 +12,10 @@
  */
 package org.openhab.binding.danfossally.internal.controller;
 
-import static org.openhab.binding.danfossally.internal.DanfossAllyBindingConstants.*;
-
 import java.util.HashMap;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.json.JSONArray;
-import org.json.JSONObject;
-import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.types.Command;
@@ -46,27 +42,5 @@ public class DanfossAllyDeviceHandler extends org.openhab.binding.danfossally.in
     @Override
     protected void status(JSONArray statusArray) {
         logger.debug("{}", statusArray.toString(2));
-
-        boolean active = false;
-        boolean fault = false;
-
-        for (int i = 0; i < statusArray.length(); i++) {
-            JSONObject s = statusArray.getJSONObject(i);
-            String code = s.getString("code");
-
-            switch (code) {
-                case "switch":
-                    active = s.optBoolean("value");
-                    break;
-                case "fault":
-                    fault = s.optBoolean("value");
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        updateState(CHANNEL_ACTIVE, active ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
-        updateState(CHANNEL_FAULT, fault ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
     }
 }

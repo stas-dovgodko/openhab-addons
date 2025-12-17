@@ -44,7 +44,7 @@ public class DanfossAllyDeviceHandler extends org.openhab.binding.danfossally.in
         logger.debug("{}", statusArray.toString(2));
     }
 
-    protected void pooling() {
+    protected void pooling(int interval) {
         // nothing to pool
     }
 }

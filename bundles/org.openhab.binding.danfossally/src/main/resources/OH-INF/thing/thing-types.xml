@@ -55,10 +55,6 @@ https://openhab.org/schemas/thing-description-1.0.0.xsd">
 				<label>Active</label>
 			</channel>
 
-			<channel id="fault" typeId="danfossally_fault">
-				<label>Fault</label>
-			</channel>
-
 			<channel id="activeTime" typeId="danfossally_datetime">
 				<label>Active Time</label>
 			</channel>
@@ -127,10 +123,6 @@ https://openhab.org/schemas/thing-description-1.0.0.xsd">
 				<label>Active</label>
 			</channel>
 
-			<channel id="fault" typeId="danfossally_fault">
-				<label>Fault</label>
-			</channel>
-
 			<channel id="activeTime" typeId="danfossally_datetime">
 				<label>Active Time</label>
 			</channel>
@@ -197,17 +189,16 @@ https://openhab.org/schemas/thing-description-1.0.0.xsd">
 		</config-description>
 	</thing-type>
 
+	<channel-group-type id="status">
+		<label>Device statuses</label>
+		<description>Group of device statuses</description>
+
+	</channel-group-type>
+
 	<channel-type id="danfossally_active">
 		<item-type>Contact</item-type>
 		<label>Active</label>
 		<description>Device output is active</description>
-		<category>Contact</category>
-	</channel-type>
-
-	<channel-type id="danfossally_fault">
-		<item-type>Contact</item-type>
-		<label>Fault</label>
-		<description>Device in fault state</description>
 		<category>Contact</category>
 	</channel-type>
 
@@ -218,14 +209,14 @@ https://openhab.org/schemas/thing-description-1.0.0.xsd">
 		<category>Contact</category>
 	</channel-type>
 
-	<channel-type id="danfossally_sub">
+	<channel-type id="danfossally_sub" advanced="true">
 		<item-type>Contact</item-type>
 		<label>Subscription Status</label>
 		<description>Subscription / API connectivity state</description>
 		<category>Contact</category>
 	</channel-type>
 
-	<channel-type id="danfossally_datetime">
+	<channel-type id="danfossally_datetime" advanced="true">
 		<item-type>DateTime</item-type>
 		<label>Timestamp</label>
 		<description>Device time information</description>
@@ -254,5 +245,25 @@ https://openhab.org/schemas/thing-description-1.0.0.xsd">
 		</state>
 	</channel-type>
 
+	<channel-type id="switch">
+		<item-type>Switch</item-type>
+		<label>Switch</label>
+		<description>Switch control</description>
+		<category>Switch</category>
+	</channel-type>
+
+	<channel-type id="string">
+		<item-type>String</item-type>
+		<label>String Value</label>
+		<description>String value from device</description>
+		<state readOnly="false"/>
+	</channel-type>
+
+	<channel-type id="number">
+		<item-type>Number</item-type>
+		<label>Number Value</label>
+		<description>Numeric value from device</description>
+		<state readOnly="true" pattern="%.2f"/>
+	</channel-type>
 
 </thing:thing-descriptions>

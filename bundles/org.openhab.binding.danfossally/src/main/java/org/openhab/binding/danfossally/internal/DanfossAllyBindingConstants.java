@@ -48,7 +48,6 @@ public class DanfossAllyBindingConstants {
     public static final String CHANNEL_SETPOINT = "setpoint";
     public static final String CHANNEL_DELTA = "delta";
     public static final String CHANNEL_ACTIVE = "active";
-    public static final String CHANNEL_FAULT = "fault";
 
     public static ChannelUID channelUID(String thingUID, String channelId) {
         return new ChannelUID(thingUID + ":" + channelId);

@@ -71,7 +71,6 @@ public class DanfossAllyDeviceHandler extends org.openhab.binding.danfossally.in
         Double tempMeasured = null;
         String mode = null;
         boolean active = false;
-        boolean fault = false;
 
         for (int i = 0; i < statusArray.length(); i++) {
             JSONObject s = statusArray.getJSONObject(i);
@@ -99,9 +98,6 @@ public class DanfossAllyDeviceHandler extends org.openhab.binding.danfossally.in
                     break;
                 case "output_status":
                     active = s.optString("value").equals("active");
-                    break;
-                case "fault":
-                    fault = s.optBoolean("value");
                     break;
                 case "manual_mode_fast":
                 case "manual_mode":
@@ -190,6 +186,5 @@ public class DanfossAllyDeviceHandler extends org.openhab.binding.danfossally.in
 
         updateTemperatureChannel(CHANNEL_SETPOINT, effectiveSetpoint);
         updateState(CHANNEL_ACTIVE, active ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
-        updateState(CHANNEL_FAULT, fault ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
     }
 }

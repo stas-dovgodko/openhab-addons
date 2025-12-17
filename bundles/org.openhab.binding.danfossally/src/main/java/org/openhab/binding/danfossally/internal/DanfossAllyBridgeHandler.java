@@ -112,17 +112,20 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
 
                     getThing().getThings().forEach(child -> {
                         if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
-                            if (handler.getDeviceId().equals(id)) {
-                                handler.updateFromDevice(dev);
+                            try {
+                                if (handler.getDeviceId().equals(id)) {
+                                    handler.updateFromDevice(dev);
 
-                                logger.debug("Found supported device [{}, {}]", id, dev.toString(2));
+                                    logger.debug("Found supported device [{}, {}]", id, dev.toString(2));
 
-                                foundIds.add(id);
+                                    foundIds.add(id);
+                                }
+                            } catch (Exception e) {
+                                logger.warn("Error while update Danfoss Ally device", e);
                             }
                         } else {
                             // ?
-                            logger.error("Wrong device handler [{}, {}]", id,
-                                    child.getHandler().getClass().getCanonicalName());
+                            logger.error("Wrong device handler [{}, {}]", id, child.getUID().getAsString());
                         }
                     });
                 }
@@ -213,9 +216,7 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
 
             logger.debug("HTTP request to {} with {} token", url, token);
 
-            String response = HttpUtil.executeUrl("GET", url, headers, null, // content (InputStream) – не потрібно для
-                                                                             // GET
-                    null, // contentType
+            String response = HttpUtil.executeUrl("GET", url, headers, null, null, // contentType
                     5000 // timeout
             );
 
@@ -295,7 +296,7 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             headers.put("Authorization", "Bearer " + token);
             headers.put("Accept", "application/json");
 
-            logger.debug("HTTP POST to {} with {} token", url, token);
+            logger.debug("HTTP POST to {} with {} data", url, payload);
 
             String response = HttpUtil.executeUrl("POST", url, headers, new ByteArrayInputStream(bytes),
                     "application/json", 5000);
@@ -312,17 +313,11 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command instanceof RefreshType) {
-            /*
-             * try {
-             * getThing().getThings().forEach(child -> {
-             * if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
-             * // poll
-             * }
-             * });
-             * } catch (Exception e) {
-             * logger.warn("Error while refreshing Danfoss Ally devices via bridge command", e);
-             * }
-             */
+            getThing().getThings().forEach(child -> {
+                if (child.getHandler() instanceof DanfossAllyDeviceHandler handler) {
+                    handler.refresh();
+                }
+            });
         }
     }
 

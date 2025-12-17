@@ -17,25 +17,36 @@ import static org.openhab.binding.danfossally.internal.DanfossAllyBindingConstan
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.openhab.core.library.types.DateTimeType;
+import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.OpenClosedType;
 import org.openhab.core.library.types.QuantityType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.library.unit.SIUnits;
 import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.Channel;
+import org.openhab.core.thing.ChannelGroupUID;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
+import org.openhab.core.thing.binding.builder.ChannelBuilder;
+import org.openhab.core.thing.type.ChannelKind;
+import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
@@ -69,31 +80,105 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
         return cfg.deviceId;
     }
 
-    protected void pooling() {
-        DanfossAllyBridgeHandler bridge = getBridgeHandler();
-        if (bridge == null) {
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE, "Bridge offline");
+    public void updateChannels(JSONObject deviceInfo) {
+        logger.debug("Starting channel update");
+
+        JSONArray statusArray = deviceInfo.optJSONArray("status");
+        if (statusArray == null || statusArray.length() == 0) {
+            logger.warn("No status array found in device info");
             return;
         }
 
+        List<Channel> channels = new ArrayList<>(this.getThing().getChannels().stream()
+                // .filter(ch -> ch.getChannelTypeUID() == null || !ch.getUID().getId().startsWith("status"))
+                .collect(Collectors.toList()));
+
+        ChannelGroupUID groupUID = new ChannelGroupUID(this.getThing().getUID(), "status");
+        boolean changed = false;
+        for (int i = 0; i < statusArray.length(); i++) {
+            try {
+                JSONObject s = statusArray.getJSONObject(i);
+                String code = s.getString("code");
+                Object value = s.get("value");
+
+                String channelId = code.replaceAll("[^A-Za-z0-9_]", "_");
+                ChannelUID channelUID = new ChannelUID(groupUID, channelId);
+                ChannelTypeUID ct;
+
+                boolean channelExists = channels.stream().anyMatch(ch -> ch.getUID().equals(channelUID));
+
+                if (!channelExists) {
+                    // Визначаємо тип Item на основі типу значення
+                    String itemType;
+                    if (value instanceof Number) {
+                        itemType = "Number";
+                        ct = new ChannelTypeUID(BINDING_ID, "number");
+                    } else if (value instanceof Boolean) {
+                        itemType = "Switch";
+                        ct = new ChannelTypeUID(BINDING_ID, "switch");
+                    } else {
+                        itemType = "String";
+                        ct = new ChannelTypeUID(BINDING_ID, "string");
+                    }
+
+                    changed = channels
+                            .add(ChannelBuilder.create(channelUID, itemType).withType(ct).withLabel("Status " + code)
+                                    .withKind(ChannelKind.STATE).withDescription("API status for " + code).build());
+                    logger.info("Added dynamic channel: {} (type: {})", channelId, itemType);
+
+                }
+            } catch (Exception e) {
+                logger.error("Error processing status item {}: {}", i, e.getMessage(), e);
+            }
+        }
+
+        if (changed) {
+            updateThing(editThing().withChannels(channels).build());
+        }
+    }
+
+    public void refresh() {
+        try {
+            String id = getDeviceId();
+            JSONObject status = getBridgeHandler().getDevice(id);
+            ChannelGroupUID groupUID = new ChannelGroupUID(this.getThing().getUID(), "status");
+            if (status == null) {
+                logger.warn("No status found for {} device", id);
+            } else {
+                logger.info("Refresh for {} device", id);
+                JSONArray statusArray = status.optJSONArray("status");
+
+                for (int i = 0; i < statusArray.length(); i++) {
+                    JSONObject s = statusArray.getJSONObject(i);
+                    String code = s.getString("code");
+                    Object value = s.get("value");
+
+                    String channelId = code.replaceAll("[^A-Za-z0-9_]", "_");
+                    ChannelUID channelUID = new ChannelUID(groupUID, channelId);
+
+                    if (value instanceof Boolean b) {
+                        updateState(channelUID, b.booleanValue() ? OnOffType.ON : OnOffType.OFF);
+                    } else if (value instanceof Number n) {
+                        updateState(channelUID, new DecimalType(n));
+                    } else {
+                        updateState(channelUID, new StringType(value.toString()));
+                    }
+                }
+
+                status(statusArray);
+            }
+            updateStatus(ThingStatus.ONLINE);
+        } catch (Exception e) {
+            logger.warn("Error while polling Danfoss Ally device", e);
+            updateStatus(ThingStatus.OFFLINE);
+        }
+    }
+
+    protected void pooling(int interval) {
         Random random = new Random();
 
-        int interval = bridge.getPollingInterval();
-
         pollingJob = scheduler.scheduleWithFixedDelay(() -> {
-            try {
-                String id = getDeviceId();
-                JSONArray status = bridge.getStatus(id);
-                if (status == null) {
-                    logger.warn("No status found for {} device", id);
-                } else {
-                    status(status);
-                }
-                updateStatus(ThingStatus.ONLINE);
-            } catch (Exception e) {
-                logger.warn("Error while polling Danfoss Ally device", e);
-                updateStatus(ThingStatus.OFFLINE);
-            }
+            refresh();
         }, random.nextInt(interval), interval, TimeUnit.SECONDS);
     }
 
@@ -110,7 +195,13 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
 
         this.config = cfg;
 
-        pooling();
+        DanfossAllyBridgeHandler bridge = getBridgeHandler();
+        if (bridge == null) {
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.BRIDGE_OFFLINE, "Bridge offline");
+            return;
+        }
+
+        pooling(bridge.getPollingInterval());
 
         updateStatus(ThingStatus.ONLINE);
     }
@@ -126,16 +217,12 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
 
     abstract protected HashMap<String, Object> command(ChannelUID channelUID, Command command);
 
-    protected void populate(JSONObject deviceInfo) {
-        // nothing todo
-    }
-
     abstract protected void status(JSONArray deviceInfo);
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         if (command instanceof RefreshType) {
-            // poll();
+            refresh();
             return;
         }
 
@@ -150,8 +237,21 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
             return;
         }
 
-        // Аналог твоєї частини JS, де формується commands(...)
         JSONArray commands = new JSONArray();
+
+        logger.debug("Command in {} channel( {} group)", channelUID.getAsString(), channelUID.getGroupId());
+
+        if (channelUID.getGroupId().equals("status")) {
+            Object value;
+            if (command instanceof OnOffType of) {
+                value = of.equals(OnOffType.ON);
+            } else if (command instanceof DecimalType dt) {
+                value = dt.doubleValue();
+            } else {
+                value = command.toFullString();
+            }
+            commands.put(new JSONObject().put("code", channelUID.getId().substring(7)).put("value", value));
+        }
 
         command(channelUID, command).forEach((key, value) -> {
             commands.put(new JSONObject().put("code", key).put("value", value));
@@ -212,7 +312,6 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
             return;
         }
 
-        // Хак: якщо значення > 1e12 – це, скоріш за все, мілісекунди, інакше секунди
         Instant instant = ts > 1_000_000_000_000L ? Instant.ofEpochMilli(ts) : Instant.ofEpochSecond(ts);
 
         ZonedDateTime zdt = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault());
@@ -221,26 +320,21 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
     }
 
     public void updateFromDevice(JSONObject deviceInfo) {
+
+        updateChannels(deviceInfo);
+
         // ---- online/sub/contact ----
         boolean online = deviceInfo.optBoolean("online", true);
         boolean sub = deviceInfo.optBoolean("sub", true);
 
         updateState(CHANNEL_ONLINE, online ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
         updateState(CHANNEL_SUB, sub ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
-        updateStatus(online ? ThingStatus.ONLINE : ThingStatus.OFFLINE);
 
         updateTimestampChannel(CHANNEL_ACTIVE_TIME, deviceInfo, "active_time");
         updateTimestampChannel(CHANNEL_CREATE_TIME, deviceInfo, "create_time");
         updateTimestampChannel(CHANNEL_UPDATE_TIME, deviceInfo, "update_time");
 
-        /*
-         * JSONArray statusArray = deviceInfo.optJSONArray("status");
-         * if (statusArray != null) {
-         * status(statusArray);
-         * }
-         */
-
-        populate(deviceInfo);
+        updateStatus(online ? ThingStatus.ONLINE : ThingStatus.OFFLINE);
     }
 
     protected @Nullable DanfossAllyBridgeHandler getBridgeHandler() {
