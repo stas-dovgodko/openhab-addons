@@ -138,15 +138,28 @@ public abstract class DanfossAllyDeviceHandler extends BaseThingHandler {
     }
 
     public void refresh() {
+        Random random = new Random();
+
         try {
             String id = getDeviceId();
-            JSONObject status = getBridgeHandler().getDevice(id);
             ChannelGroupUID groupUID = new ChannelGroupUID(this.getThing().getUID(), "status");
-            if (status == null) {
+
+            JSONArray statusArray = null;
+
+            if (random.nextBoolean()) {
+                JSONObject status = getBridgeHandler().getDevice(id);
+
+                if (status != null) {
+                    statusArray = status.optJSONArray("status");
+                }
+            } else {
+                statusArray = getBridgeHandler().getStatus(id);
+            }
+
+            if (statusArray == null) {
                 logger.warn("No status found for {} device", id);
             } else {
                 logger.info("Refresh for {} device", id);
-                JSONArray statusArray = status.optJSONArray("status");
 
                 for (int i = 0; i < statusArray.length(); i++) {
                     JSONObject s = statusArray.getJSONObject(i);
