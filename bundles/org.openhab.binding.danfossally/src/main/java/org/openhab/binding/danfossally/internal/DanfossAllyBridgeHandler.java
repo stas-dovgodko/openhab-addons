@@ -89,6 +89,8 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
 
         int interval = getPollingInterval();
 
+        updateStatus(ThingStatus.UNKNOWN);
+
         pollingJob = scheduler.scheduleWithFixedDelay(() -> {
             try {
                 JSONArray devices = getDevices();
@@ -140,12 +142,12 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
                         }
                     }
                 }
+
+                updateStatus(ThingStatus.ONLINE);
             } catch (Exception e) {
                 logger.warn("Error while polling Danfoss Ally devices", e);
             }
         }, 5, interval, TimeUnit.SECONDS);
-
-        updateStatus(ThingStatus.ONLINE);
     }
 
     @Override
@@ -156,6 +158,8 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             pollingJob = null;
         }
         accessToken = null;
+
+        super.dispose();
     }
 
     protected synchronized @Nullable String getAccessToken() {
@@ -196,7 +200,6 @@ public class DanfossAllyBridgeHandler extends BaseBridgeHandler {
             return accessToken;
         } catch (IOException e) {
             logger.warn("Error getting Danfoss Ally token: {}", e.getMessage());
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
             return null;
         }
     }

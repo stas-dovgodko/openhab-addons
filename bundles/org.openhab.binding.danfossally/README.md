@@ -13,11 +13,18 @@ This binding supports the following thing types:
 
 ### Supported Devices
 
-The binding currently supports the following Danfoss Ally thermostat models:
+The binding supports **all devices returned by the Danfoss Ally API**.  
+This means that any device visible in your Ally mobile application can also be accessed and controlled through this binding without additional configuration.
+
+However, for two specific device types, the binding provides **enhanced functionality** with additional computed properties for user convenience:
 
 - **Danfoss Icon2 RT**
+- **Danfoss Ally™ Radiator Thermostat**
 
-**Note:** Only the Danfoss Icon2 RT thermostat is currently supported. If you have other Danfoss Ally device types that you would like to see supported, please enable INFO logging for `org.openhab.binding.danfossally.internal` and provide the log output to the binding author. This will help identify and add support for additional device types.
+For these devices, the binding exposes extra attributes that are calculated internally, offering improved usability and easier integration compared to the raw API output.  
+All other device types remain fully supported based on the data returned by the API.
+
+### Logging
 
 To enable INFO logging, add the following to your `log4j2.xml` configuration:
 
@@ -60,6 +67,22 @@ The `account` bridge requires OAuth2 credentials from the Danfoss Developer Port
 | `clientId` | text | yes | - | OAuth2 Client ID from Danfoss Developer Portal |
 | `clientSecret` | text | yes | - | OAuth2 Client Secret from Danfoss Developer Portal |
 | `pollingInterval` | integer | no | 60 | Interval in seconds for refreshing device data (minimum: 10) |
+
+### API Rate-Limit Considerations
+
+The Danfoss Ally API enforces strict rate limits, and all polling intervals must be configured accordingly.  
+To avoid throttling, the binding **must limit the frequency of device polling based on the total number of devices** linked to the account.
+
+**Recommended formula:**  
+> **60 seconds per every 8 devices**
+
+This means:
+
+- If you have **8 devices**, the minimum safe `pollingInterval` is **60 seconds**.  
+- If you have **16 devices**, the interval must be doubled to **120 seconds**.  
+- If you have **24 devices**, increase it to **180 seconds**, and so on.
+
+Failing to scale the polling interval proportionally may lead to API rate-limit violations, rejected requests, or temporary blocking by the service.
 
 ### Bridge Configuration Example
 
@@ -110,7 +133,27 @@ After configuring the bridge, discovered thermostats will appear in your inbox. 
 
 ## Channels
 
-### Thermostat Channels
+### Dynamic Channel Generation
+
+All devices retrieved through the API automatically generate their own set of channels.  
+Each channel follows a unified naming pattern:
+
+```
+status#<property>
+```
+
+The values exposed through these channels are provided **exactly as returned by the Danfoss Ally API**, without any modification, transformation, or interpretation by the binding.
+
+Some of these channels are **bidirectional**, meaning they support both reading and writing, depending on the capabilities of the underlying device and the API.
+
+Because the API exposes different structures for different device types, **each device model has its own unique channel set**.  
+There is no technical possibility to provide a consolidated table of all channels, so users should inspect the channels published by each individual Thing.  
+If certain data points are missing, it simply means they are **not provided by the API**.
+
+Additionally, because channels are created dynamically, there is a theoretical chance that the API may change its schema in the future. While no such changes have occurred so far, device channel sets may evolve if the API output changes.
+
+
+### Thermostat Extended Channels
 
 | Channel ID | Item Type | Read/Write | Description |
 |------------|-----------|------------|-------------|
