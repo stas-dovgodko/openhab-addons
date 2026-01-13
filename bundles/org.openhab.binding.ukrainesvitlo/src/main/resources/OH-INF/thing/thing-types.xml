@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="ukrainesvitlo"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<bridge-type id="service">
+		<label>Ukraine Svitlo Service</label>
+		<description>Shared bridge for Ukraine outage schedules.</description>
+		<config-description>
+			<parameter name="refreshSeconds" type="integer" min="60" required="false">
+				<label>Default refresh interval (seconds)</label>
+				<default>300</default>
+			</parameter>
+			<parameter name="httpTimeoutMs" type="integer" min="1000" required="false">
+				<label>HTTP timeout (ms)</label>
+				<default>8000</default>
+			</parameter>
+		</config-description>
+	</bridge-type>
+
+	<thing-type id="region">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="service"/>
+		</supported-bridge-type-refs>
+
+		<label>Outage Schedule</label>
+		<description>Outage schedule for a region/provider/group</description>
+
+		<channels>
+			<channel id="electricity" typeId="electricity"/>
+			<channel id="scheduleUpdatedOn" typeId="datetime"/>
+			<channel id="scheduleDataChangedOn" typeId="datetime"/>
+			<channel id="nextPlannedOutage" typeId="datetime"/>
+			<channel id="nextScheduledOutage" typeId="datetime"/>
+			<channel id="nextConnectivity" typeId="datetime"/>
+			<channel id="plannedOutagesJson" typeId="json"/>
+			<channel id="scheduledOutagesJson" typeId="json"/>
+			<channel id="dataChanged" typeId="dataChanged"/>
+		</channels>
+
+		<config-description>
+			<parameter name="region" type="text" required="true">
+				<label>Region</label>
+				<description>Region key (e.g. kyiv, dnipro, sumy, odesa, ...)</description>
+			</parameter>
+
+			<parameter name="provider" type="text" required="true">
+				<label>Provider</label>
+				<description>One of: yasno, dtek_json, e-svitlo</description>
+
+				<options>
+					<option value="yasno">Yasno</option>
+					<option value="dtek_json">DTEK</option>
+					<option value="e-svitlo">E-Svitlo</option>
+				</options>
+
+				<limitToOptions>true</limitToOptions>
+			</parameter>
+
+			<parameter name="group" type="text" required="false">
+				<label>Group</label>
+				<description>Provider group (e.g. 3.1). Required for yasno and dtek_json. For e-svitlo use auto.</description>
+			</parameter>
+
+			<parameter name="username" type="text" required="false">
+				<label>E-Svitlo username</label>
+				<description>Used only when provider is e-svitlo.</description>
+			</parameter>
+			<parameter name="password" type="text" required="false">
+				<label>E-Svitlo password</label>
+				<description>Used only when provider is e-svitlo.</description>
+			</parameter>
+			<parameter name="accountId" type="text" required="false">
+				<label>E-Svitlo account ID</label>
+				<description>Used only when provider is e-svitlo.</description>
+			</parameter>
+
+			<parameter name="refreshSeconds" type="integer" min="60" required="false">
+				<label>Refresh interval (seconds)</label>
+				<default>300</default>
+			</parameter>
+		</config-description>
+
+	</thing-type>
+
+</thing:thing-descriptions>

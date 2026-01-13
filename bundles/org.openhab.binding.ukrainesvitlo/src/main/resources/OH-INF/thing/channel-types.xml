@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="ukrainesvitlo"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<channel-type id="electricity" advanced="false">
+		<item-type>String</item-type>
+		<label>Electricity</label>
+		<description>connected | planned_outage | emergency</description>
+		<state pattern="%s" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="datetime" advanced="true">
+		<item-type>DateTime</item-type>
+		<label>DateTime</label>
+	</channel-type>
+
+	<channel-type id="json" advanced="true">
+		<item-type>String</item-type>
+		<label>Outages JSON</label>
+		<description>JSON array of outage events</description>
+	</channel-type>
+
+	<channel-type id="dataChanged" advanced="false">
+		<kind>trigger</kind>
+		<label>Data Changed</label>
+		<description>Fires when outage schedule data changes</description>
+		<event>
+			<options>
+				<option value="changed">changed</option>
+			</options>
+		</event>
+	</channel-type>
+
+</thing:thing-descriptions>
